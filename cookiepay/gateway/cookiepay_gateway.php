@@ -50,6 +50,36 @@ function cookiepay_payment_gateway(){
 			$this->ck_vacct 	= $this->get_option( 'ck_vacct' );
 			$this->ck_naver 	= $this->get_option( 'ck_naver' );
 			$this->ck_mobile 	= $this->get_option( 'ck_mobile' );
+		 
+			/*
+			# 데모용에만 살려야함(S)
+		 	//토스
+		 	if($this->cookiepay_pg == 0){
+				$this->cookiepay_api_id = 'sandbox_674xqh929i2';
+				$this->cookiepay_api_key = 'sandbox_3249997bd2538aa53e01395dce0b757cabc7a1ecf9';
+			}
+			//이지
+			elseif($this->cookiepay_pg == 1){
+				$this->cookiepay_api_id = '';
+				$this->cookiepay_api_key = '';
+			}
+			//키움
+			elseif($this->cookiepay_pg == 2){
+				$this->cookiepay_api_id = 'sandbox_pcm8jgv2';
+				$this->cookiepay_api_key = 'sandbox_a267a97d4e163f07ea5c44eb42a8e8f2b834bc0d70';
+			}
+			//모빌
+			elseif($this->cookiepay_pg == 3){
+				$this->cookiepay_api_id = '';
+				$this->cookiepay_api_key = '';
+			}
+			//다날
+			elseif($this->cookiepay_pg == 4){
+				$this->cookiepay_api_id = '';
+				$this->cookiepay_api_key = '';
+			}
+			# 데모용에만 살려야함(E)
+			*/
 
 		 	$this->supports = array(
 	            'refunds',
@@ -113,6 +143,7 @@ function cookiepay_payment_gateway(){
 					'title'       => 'Test API KEY',
 					'type'        => 'text',
 				),*/
+
 				'cookiepay_api_id' => array(
 					'title'       => '연동 아이디',
 					'type'        => 'text'
@@ -122,6 +153,7 @@ function cookiepay_payment_gateway(){
 					'type'        => 'text'
 				),
 				/*
+				# 데모용에만 살려야함(S)
 				'cookiepay_api_id' => array(
 					'title'       => '연동 아이디',
 					'type'        => 'hidden',
@@ -132,7 +164,9 @@ function cookiepay_payment_gateway(){
 					'type'        => 'hidden',
 					'description'	=> '데모용 사이트에서는 입력, 수정 불가합니다.',
 				),
+				# 데모용에만 살려야함(E)
 				*/
+
 				'ck_cancel_status' 	=> array(
 			        'title'   	=> '결제취소 가능상태 설정',
 			        'type'    	=> 'multiselect',
@@ -698,7 +732,8 @@ add_action( 'woocommerce_pay_order_before_submit' ,function(){
 		if(empty($paymethod)) $paymethod = 'CARD';
 		// Customer billing information details
 		$billing_email  	= $order2->get_billing_email();
-		$billing_phone  	= $order2->get_billing_phone();
+		//$billing_phone  	= $order2->get_billing_phone();
+		$billing_phone  	= str_replace("-","",$order2->get_billing_phone());
 		$billing_first_name = $order2->get_billing_first_name();
 		$billing_last_name  = $order2->get_billing_last_name();
 		$billing_address_1  = $order2->get_billing_address_1();
