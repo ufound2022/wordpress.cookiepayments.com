@@ -524,6 +524,6 @@ function cancel_order_call() {
 add_action('wp_ajax_cancel_order', 'cancel_order_call');
 add_action('wp_ajax_nopriv_cancel_order', 'cancel_order_call');
 function ck_get_pg_arr(){
-	return array('토스','이지페이','키움페이','모빌페이','다날');
+	return array('토스','이지페이','키움페이','모빌페이','다날','웰컴1차','이롬페이');
 }
 ?>
