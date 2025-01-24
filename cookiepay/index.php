@@ -3,7 +3,7 @@
 Plugin Name: CookiePay for woocommerce 
 Plugin URI: https://cookiepayments.com/page/form
 Description: CookiePay for woocommerce 
-Version: 1.0.1
+Version: 1.0.3
 Author: CookiePay
 */
 
@@ -42,7 +42,24 @@ function custom_override_checkout_fields_03( $fields ) {
      //unset($fields['billing']['billing_address_2']); 
      unset($fields['billing']['billing_city']); 
      //unset($fields['billing']['billing_postcode']); 
-     unset($fields['billing']['billing_country']); 
+
+	// ** 한번 결제 이후는 아래와 같이 필수 항목 입력하라 나오는 버그 수정 ("계속하려면 주소를 입력해주세요")
+	// ** billing_country를 숨기기
+		if( isset( $fields['billing']['billing_country'] ) ){
+		// 필수(required) 여부를 해제
+		$fields['billing']['billing_country']['required'] = false; 
+		
+		// 화면 표시 방식: hidden
+		$fields['billing']['billing_country']['type'] = 'hidden'; 
+		
+		// 레이블, placeholder도 안 뜨도록 제거
+		$fields['billing']['billing_country']['label'] = false; 
+		$fields['billing']['billing_country']['placeholder'] = '';
+		
+		// 기본값 설정 (필수라면 원하는 국가코드 설정도 가능)
+		// $fields['billing']['billing_country']['default'] = 'KR';
+	}
+
      unset($fields['billing']['billing_state']); 
      //unset($fields['billing']['billing_email']); 
      //unset($fields['billing']['billing_phone']); 
@@ -525,5 +542,41 @@ add_action('wp_ajax_cancel_order', 'cancel_order_call');
 add_action('wp_ajax_nopriv_cancel_order', 'cancel_order_call');
 function ck_get_pg_arr(){
 	return array('토스','이지페이','키움페이','모빌페이','다날','웰컴1차','이롬페이');
+}
+
+/**
+ * 플러그인 활성화 시 작동!!
+ * 현재 WooCommerce 체크아웃 페이지가 블록 기반인지 확인 후
+ * 숏코드([woocommerce_checkout])로 강제 변경
+ */
+register_activation_hook(__FILE__, 'force_classic_checkout_page');
+function force_classic_checkout_page() {
+
+    // WooCommerce가 활성 상태인지 검사
+    if (!function_exists('wc_get_page_id')) {
+        return;
+    }
+
+    // 체크아웃 페이지 ID 가져오기
+    $checkout_page_id = wc_get_page_id('checkout');
+    if (!$checkout_page_id || $checkout_page_id <= 0) {
+        return;
+    }
+
+    // 체크아웃 페이지 내용 확인
+    $old_content = get_post_field('post_content', $checkout_page_id);
+    if (!$old_content) {
+        return;
+    }
+
+    $is_block_checkout = (strpos($old_content, '<!-- wp:woocommerce/checkout') !== false);
+
+    // 블록 체크아웃일 경우 숏코드 형식으로 업데이트
+    if ($is_block_checkout) {
+        wp_update_post(array(
+            'ID'           => $checkout_page_id,
+            'post_content' => '[woocommerce_checkout]'
+        ));
+    }
 }
 ?>
