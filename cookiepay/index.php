@@ -414,10 +414,13 @@ add_action('woocommerce_order_details_after_order_table',function($order){
 			$gateway_info = get_ck_key();
 			$order_status  = $order->get_status();
 			//결제 취소가능상태일 때 출력(가상계좌 제외)
-			if($pay_method != 'VACCT' && !empty($tid) && (in_array($order_status, $gateway_info['status']) || in_array('wc-'.$order_status, $gateway_info['status']))){
-				$output .='
-					<button class="button ck_cancel_order" data-oid="'.$order->id.'">주문취소</button>
-				';
+			if ($pay_method != 'VACCT' && !empty($tid)) {
+				$statuses = is_array($gateway_info['status']) ? $gateway_info['status'] : array();
+				if (in_array($order_status, $statuses) || in_array('wc-' . $order_status, $statuses)) {
+					$output .='
+						<button class="button ck_cancel_order" data-oid="'.$order->id.'">주문취소</button>
+					';
+				}
 			}
 			//완료상태일때 전표 출력
 			$tid 	= get_post_meta($order->id,'ck_r_tid',true);
