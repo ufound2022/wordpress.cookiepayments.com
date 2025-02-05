@@ -36,3 +36,8 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 = 1.0 =
 * 최초 배포
+
+​= 1.3 =
+※ 플러그인 1.0.3 업데이트 [2025.01.24]
+1. 워드프레스 6.7.1, 우커머스 9.6.0 최신버전 지원
+업데이트 방법 : 우커머스 플러그인 메뉴 접근 > 기존버전 CookiePay for woocommerce 비활성화 후 삭제
