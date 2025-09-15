@@ -141,7 +141,7 @@ function cookiepay_payment_gateway()
 				),
 				'testmode' => array(
 					'title'       => '테스트 모드',
-					'label'       => '테스트모드를 활성화합니다.<a target="_blank" href="https://cookiepayments.com/iroboard/view?bId=API_Devolper&wr_id=2166">(쿠키페이 연동 전 샌더박스 구축환경 바로가기)</a>',
+					'label'       => '테스트모드를 활성화합니다.<a target="_blank" href="https://www.cookiepayments.com/iroboard/view?bId=API_Devolper&wr_id=2181">(쿠키페이 연동 전 샌더박스 구축환경 바로가기)</a>',
 					'type'        => 'checkbox',
 					'description' => '',
 					'default'     => 'yes',
