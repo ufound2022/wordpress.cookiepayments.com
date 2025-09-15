@@ -80,6 +80,7 @@ function custom_override_checkout_fields_03( $fields ) {
 function get_ck_paymethod(){
 	return array(
 		'CARD'		=> '카드',
+		'CARD_WON'	=> '해외원화',			
 		'KAKAOPAY'	=>'카카오페이',
 		'BANK'		=>'계좌이체',
 		'VACCT'		=>'가상계좌',

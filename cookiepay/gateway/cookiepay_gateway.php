@@ -64,6 +64,7 @@ function cookiepay_payment_gateway()
 			$this->cookiepay_api_key = $this->get_option('cookiepay_api_key');
 
 			$this->ck_card 		= $this->get_option('ck_card');
+			$this->ck_card_won 	= $this->get_option('ck_card_won');					
 			$this->ck_kakao 	= $this->get_option('ck_kakao');
 			$this->ck_bank 		= $this->get_option('ck_bank');
 			$this->ck_vacct 	= $this->get_option('ck_vacct');
@@ -200,6 +201,12 @@ function cookiepay_payment_gateway()
 					'type'    => 'checkbox',
 					'default' => 'yes',
 				),
+				'ck_card_won' 	=> array(
+					'title'   => '해외원화 신용카드 결제 사용여부',
+					'label'   => '해외원화 신용카드 결제를 활성화합니다.',
+					'type'    => 'checkbox',
+					'default' => 'yes',
+				),						
 				'ck_bank' 	=> array(
 					'title'   => '계좌이체 결제 사용여부',
 					'label'   => '계좌이체 결제를 활성화합니다.',
@@ -371,6 +378,7 @@ function cookiepay_payment_gateway()
 					<select class="select ck_select" name="ck_paymethod">
 						<?php
 						if ($this->ck_card == 'yes') echo '<option value="CARD">신용카드</option>';
+						if ($this->ck_card_won == 'yes') echo '<option value="CARD_WON">해외원화 신용카드</option>';							
 						if ($this->ck_bank == 'yes') echo '<option value="BANK">계좌이체</option>';
 						if ($this->ck_vacct == 'yes') echo '<option value="VACCT">가상계좌</option>';
 						if ($this->ck_kakao == 'yes') echo '<option value="KAKAOPAY">카카오페이</option>';
@@ -793,6 +801,13 @@ add_action('woocommerce_pay_order_before_submit', function () {
 		update_post_meta($order_id, 'ck_key', $ck_key['ck_key']);
 
 		if (empty($paymethod)) $paymethod = 'CARD';
+
+		$pay_type = "";
+		if(!empty($paymethod) && $paymethod == "CARD_WON") { 
+			$paymethod = "CARD";
+			$pay_type = "7";
+		}
+
 		// Customer billing information details
 		$billing_email  	= $order2->get_billing_email();
 		//$billing_phone  	= $order2->get_billing_phone();
@@ -964,7 +979,7 @@ add_action('woocommerce_pay_order_before_submit', function () {
 			    <input type="hidden" name="ETC4" id="ETC4" placeholder="사용자 추가필드 4" value="">
 			    <input type="hidden" name="ETC5" id="ETC5" placeholder="사용자 추가필드 5" value="">
 			    <input type="hidden" name="PAY_VERSION" id="PAY_VERSION" placeholder="사용자 추가필드 5" value="">
-			    <input type="hidden" name="PAY_TYPE" id="PAY_TYPE" placeholder="원화결제" value="">
+			    <input type="hidden" name="PAY_TYPE" id="PAY_TYPE" placeholder="원화결제" value="'.$pay_type.'">
 			    <input type="hidden" name="FORWARD" id="FORWARD" placeholder="웰컴페이 2차 결제창 팝업/부모여부" value="Y">
 				<input type="hidden" name="ORDER_NO_CHECK" id="ORDER_NO_CHECK" placeholder="주문번호 중복체크" value="N">
 			    <!-- Escrow -->
