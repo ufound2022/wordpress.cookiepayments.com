@@ -3,11 +3,11 @@
 Plugin Name: CookiePay for woocommerce 
 Plugin URI: https://cookiepayments.com/page/form
 Description: CookiePay for woocommerce 
-Version: 1.1
+Version: 1.2
 Author: CookiePay
 */
 
-define( 'PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); 
+define( 'PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 include (PLUGIN_DIR.'gateway/cookiepay_gateway.php');
 include (PLUGIN_DIR.'inc/ck_pay_list.php');
 
@@ -221,24 +221,24 @@ function ck_shop_order_column_content( $column, $post_id )
     }
 }
 function ck_display_order_data_in_admin( $order ){
-	$result = json_decode(get_post_meta($order->id,'ck_result',TRUE),TRUE);  
+	$result = json_decode(get_post_meta($order->get_id(),'ck_result',TRUE),TRUE);
 	?>
     <div class="ck_order_data">
         <ul>
         	<?php
-        	$pay_method = get_post_meta($order->id,'ck_method',TRUE);
-			$result = json_decode(get_post_meta($order->id,'ck_result',TRUE),TRUE);
+        	$pay_method = get_post_meta($order->get_id(),'ck_method',TRUE);
+			$result = json_decode(get_post_meta($order->get_id(),'ck_result',TRUE),TRUE);
         	if(!empty($pay_method)){
         	?>
         	<li><label>결제방법</label><span><?=(get_ck_paymethod()[$pay_method])?></span></li>
         	<?php
         	}
 			if($pay_method == 'VACCT'){
-				$bank 			= get_post_meta($order->id,'ck_vacct_bank',TRUE);
-				$accountno 		= get_post_meta($order->id,'ck_vacct_accountno',TRUE);
-				$reveivername 	= get_post_meta($order->id,'ck_vacct_reveivername',TRUE);
-				$depositdate 	= get_post_meta($order->id,'ck_vacct_depositdate',TRUE);
-				$depositname 	= get_post_meta($order->id,'ck_vacct_depositname',TRUE);
+				$bank 			= get_post_meta($order->get_id(),'ck_vacct_bank',TRUE);
+				$accountno 		= get_post_meta($order->get_id(),'ck_vacct_accountno',TRUE);
+				$reveivername 	= get_post_meta($order->get_id(),'ck_vacct_reveivername',TRUE);
+				$depositdate 	= get_post_meta($order->get_id(),'ck_vacct_depositdate',TRUE);
+				$depositname 	= get_post_meta($order->get_id(),'ck_vacct_depositname',TRUE);
 			?>
 				<li><label>입금은행</label><span><?=$bank?></span></li>
 	        	<li><label>입금계좌번호</label><span><?=$accountno?>(<?=$reveivername?>)</span></li>
@@ -252,7 +252,7 @@ function ck_display_order_data_in_admin( $order ){
 				$acc_no = $result['ACCEPTNO'];
 				
 				if(empty($period)){
-					$card_result = json_decode(get_post_meta($order->id,'ck_card_result',TRUE),TRUE);
+					$card_result = json_decode(get_post_meta($order->get_id(),'ck_card_result',TRUE),TRUE);
 					$period = $card_result['QUOTA'];
 				}
 	            if(!empty($card)){
@@ -341,9 +341,9 @@ add_action('woocommerce_order_details_after_order_table',function($order){
 	//쿠키페이로 결제시에만 노출
 	$pay_method = $order->get_payment_method();
 	if($pay_method == 'wc_cookiepay_pg'):
-		$pay_method = get_post_meta($order->id,'ck_method',TRUE);
-		$result 	= json_decode(get_post_meta($order->id,'ck_result',TRUE),TRUE);
-		$tid 		= get_post_meta($order->id,'ck_r_tid',TRUE);
+		$pay_method = get_post_meta($order->get_id(),'ck_method',TRUE);
+		$result 	= json_decode(get_post_meta($order->get_id(),'ck_result',TRUE),TRUE);
+		$tid 		= get_post_meta($order->get_id(),'ck_r_tid',TRUE);
 		if(!empty($pay_method)){
 			$output = '
 				<div id="ck_pay_table">
@@ -355,11 +355,11 @@ add_action('woocommerce_order_details_after_order_table',function($order){
 						</tr>
 			';
 			if($pay_method == 'VACCT'){
-				$bank 			= get_post_meta($order->id,'ck_vacct_bank',TRUE);
-				$accountno 		= get_post_meta($order->id,'ck_vacct_accountno',TRUE);
-				$reveivername 	= get_post_meta($order->id,'ck_vacct_reveivername',TRUE);
-				$depositdate 	= get_post_meta($order->id,'ck_vacct_depositdate',TRUE);
-				$depositname 	= get_post_meta($order->id,'ck_vacct_depositname',TRUE);
+				$bank 			= get_post_meta($order->get_id(),'ck_vacct_bank',TRUE);
+				$accountno 		= get_post_meta($order->get_id(),'ck_vacct_accountno',TRUE);
+				$reveivername 	= get_post_meta($order->get_id(),'ck_vacct_reveivername',TRUE);
+				$depositdate 	= get_post_meta($order->get_id(),'ck_vacct_depositdate',TRUE);
+				$depositname 	= get_post_meta($order->get_id(),'ck_vacct_depositname',TRUE);
 				
 				$output .='
 						<tr>
@@ -381,13 +381,13 @@ add_action('woocommerce_order_details_after_order_table',function($order){
 				';
 			}
 			else{
-				$card 	= $result['CARDNAME'];
-				$period = $result['QUOTA'];
-				$acc_no = $result['ACCEPTNO'];
+				$card 	= $result['CARDNAME'] ?? null;
+				$period = $result['QUOTA'] ?? null;
+				$acc_no = $result['ACCEPTNO'] ?? null;
 				
 				if(empty($period)){
-					$card_result = json_decode(get_post_meta($order->id,'ck_card_result',TRUE),TRUE);
-					$period = $card_result['QUOTA'];
+					$card_result = json_decode(get_post_meta($order->get_id(),'ck_card_result',TRUE),TRUE);
+					$period = $card_result['QUOTA'] ?? null;
 				}
 	            if(!empty($card)){
 	            	if(empty($period) && $pay_method == 'CARD') $period = '00';
@@ -419,12 +419,12 @@ add_action('woocommerce_order_details_after_order_table',function($order){
 				$statuses = is_array($gateway_info['status']) ? $gateway_info['status'] : array();
 				if (in_array($order_status, $statuses) || in_array('wc-' . $order_status, $statuses)) {
 					$output .='
-						<button class="button ck_cancel_order" data-oid="'.$order->id.'">주문취소</button>
+						<button class="button ck_cancel_order" data-oid="'.$order->get_id().'">주문취소</button>
 					';
 				}
 			}
 			//완료상태일때 전표 출력
-			$tid 	= get_post_meta($order->id,'ck_r_tid',true);
+			$tid 	= get_post_meta($order->get_id(),'ck_r_tid',true);
 			$ck_key = get_ck_key();
 			if(!empty($tid) && $order->has_status(array('completed','processing','cancelled','refunded'))){
 				$output .='
@@ -583,4 +583,3 @@ function force_classic_checkout_page() {
         ));
     }
 }
-?>
