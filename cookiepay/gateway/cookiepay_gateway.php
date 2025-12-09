@@ -2,8 +2,8 @@
 
 function ck_pay_log($message)
 {
-	$log_file = plugin_dir_path(__FILE__) . 'ck_log.txt';
-	$current_time = date("Y-m-d H:i:s");
+	$log_file = plugin_dir_path(__FILE__) . 'logs/ck_log_' . date('Y-m-d') . '.log';
+	$current_time = date('Y-m-d H:i:s');
 	$log_entry = "[$current_time] $message\n";
 	file_put_contents($log_file, $log_entry, FILE_APPEND);
 }
@@ -12,7 +12,7 @@ function ck_pay_log($message)
 add_filter('woocommerce_payment_gateways', 'add_cookiepay_gateway_class');
 function add_cookiepay_gateway_class($methods)
 {
-	$methods[] = 'WC_ck_PG';
+	$methods[] = 'WC_CK_PG';
 	return $methods;
 }
 add_action('plugins_loaded', 'cookiepay_payment_gateway');
@@ -26,7 +26,25 @@ function cookiepay_payment_gateway()
 
 	class WC_CK_PG extends WC_Payment_Gateway
 	{
-		function __construct()
+        public $cancel_status;
+        public $cookiepay_pg;
+        public $testmode;
+        public $token_url;
+        public $cancel_url;
+        public $receipt_url;
+        public $js_url;
+        public $search_url;
+        public $cookiepay_api_id;
+        public $cookiepay_api_key;
+        public $ck_card;
+        public $ck_card_won;
+        public $ck_kakao;
+        public $ck_bank;
+        public $ck_vacct;
+        public $ck_naver;
+        public $ck_mobile;
+
+        function __construct()
 		{
 			$this->id 					= 'wc_cookiepay_pg';
 			$this->method_title 		= '쿠키페이 결제';
@@ -49,14 +67,14 @@ function cookiepay_payment_gateway()
 			$this->token_url	= 'https://www.cookiepayments.com/payAuth/token';
 			$this->cancel_url	= 'https://www.cookiepayments.com/api/cancel';
 			$this->receipt_url	= 'https://www.cookiepayments.com/api/receipt';
-			$this->js_url 		= 'https://www.cookiepayments.com/js/cookiepayments-1.1.3.js';
+			$this->js_url 		= 'https://www.cookiepayments.com/js/cookiepayments-1.1.4.js';
 			$this->search_url 	= 'https://www.cookiepayments.com/api/paysearch';
 
 			if ($this->testmode == 'yes') {
 				$this->token_url	= 'https://sandbox.cookiepayments.com/payAuth/token';
 				$this->cancel_url	= 'https://sandbox.cookiepayments.com/api/cancel';
 				$this->receipt_url	= 'https://sandbox.cookiepayments.com/api/receipt';
-				$this->js_url 		= 'https://sandbox.cookiepayments.com/js/cookiepayments-1.1.3.js';
+				$this->js_url 		= 'https://sandbox.cookiepayments.com/js/cookiepayments-1.1.4.js';
 				$this->search_url 	= 'https://sandbox.cookiepayments.com/api/paysearch';
 			}
 
@@ -64,7 +82,7 @@ function cookiepay_payment_gateway()
 			$this->cookiepay_api_key = $this->get_option('cookiepay_api_key');
 
 			$this->ck_card 		= $this->get_option('ck_card');
-			$this->ck_card_won 	= $this->get_option('ck_card_won');					
+			$this->ck_card_won 	= $this->get_option('ck_card_won');
 			$this->ck_kakao 	= $this->get_option('ck_kakao');
 			$this->ck_bank 		= $this->get_option('ck_bank');
 			$this->ck_vacct 	= $this->get_option('ck_vacct');
@@ -105,13 +123,14 @@ function cookiepay_payment_gateway()
 				'refunds',
 			);
 
-			// This action hook saves the settings
-			add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
-			add_action('woocommerce_thankyou_' . $this->id, array($this, 'thankyou_page'));
-			// We need custom JavaScript to obtain a token
-			add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
-			add_action('woocommerce_api_wc_gateway_' . $this->id, array($this, 'check_vbank_response'));
-			add_action('woocommerce_api_wc_gateway_download', array($this, 'ck_download_response'));
+            // This action hook saves the settings
+            add_action('woocommerce_update_options_payment_gateways_' . $this->id, [$this, 'process_admin_options']);
+            add_action('woocommerce_thankyou_' . $this->id, [$this, 'thankyou_page']);
+
+            // We need custom JavaScript to obtain a token
+            add_action('wp_enqueue_scripts', [$this, 'payment_scripts']);
+            add_action('woocommerce_api_wc_gateway_' . $this->id, [$this, 'check_vbank_response']);
+            add_action('woocommerce_api_wc_gateway_download', [$this, 'ck_download_response']);
 		}
 		public function init_form_fields()
 		{
@@ -206,7 +225,7 @@ function cookiepay_payment_gateway()
 					'label'   => '해외원화 신용카드 결제를 활성화합니다.',
 					'type'    => 'checkbox',
 					'default' => 'yes',
-				),						
+				),
 				'ck_bank' 	=> array(
 					'title'   => '계좌이체 결제 사용여부',
 					'label'   => '계좌이체 결제를 활성화합니다.',
@@ -255,7 +274,8 @@ function cookiepay_payment_gateway()
 			global $woocommerce;
 			$order 		= new WC_Order($order_id);
 			//결제 팝업
-			if ($_GET['ck_pay'] == 'true') {
+			if (($_GET['ck_pay'] ?? null) == 'true') {
+                //
 			}
 			//주문입력 창
 			else {
@@ -378,7 +398,7 @@ function cookiepay_payment_gateway()
 					<select class="select ck_select" name="ck_paymethod">
 						<?php
 						if ($this->ck_card == 'yes') echo '<option value="CARD">신용카드</option>';
-						if ($this->ck_card_won == 'yes') echo '<option value="CARD_WON">해외원화 신용카드</option>';							
+						if ($this->ck_card_won == 'yes') echo '<option value="CARD_WON">해외원화 신용카드</option>';
 						if ($this->ck_bank == 'yes') echo '<option value="BANK">계좌이체</option>';
 						if ($this->ck_vacct == 'yes') echo '<option value="VACCT">가상계좌</option>';
 						if ($this->ck_kakao == 'yes') echo '<option value="KAKAOPAY">카카오페이</option>';
@@ -436,8 +456,8 @@ function cookiepay_payment_gateway()
 
 			// 가상계좌일 때는, 주문이 '미결제(pending)' 상태인 경우에만 on-hold로 변경
 			if (
-				$pay_method == 'VACCT' 
-				&& !empty($body['CARDNAME']) 
+				$pay_method == 'VACCT'
+				&& !empty($body['CARDNAME'])
 				&& $order->has_status('pending')
 			) {
 				$order->add_order_note('쿠키페이 가상계좌 발급', true);
@@ -464,7 +484,7 @@ function cookiepay_payment_gateway()
 			}
 			//결제 성공 시 결제금액 인증 진행
 			elseif ($body['RESULTCODE'] == '0000') {
-				
+
 				$result_etc		= json_encode($body, JSON_UNESCAPED_UNICODE);
 				ck_pay_log("결제 성공. result_etc = " . $result_etc);
 
@@ -482,8 +502,8 @@ function cookiepay_payment_gateway()
 					$order->payment_complete();
 					ck_pay_log("payment_complete() 호출 후");
 
-					$order->reduce_order_stock();
-					$order->add_order_note('쿠키페이 결제 완료(승인번호:' . $body['ACCEPT_NO'] . ')', true);
+					wc_reduce_stock_levels($order->get_id());
+					$order->add_order_note('쿠키페이 결제 완료(승인번호:' . ($body['ACCEPT_NO'] ?? '') . ')', true);
 					// Remove cart
 					$woocommerce->cart->empty_cart();
 
@@ -638,7 +658,7 @@ function cookiepay_payment_gateway()
 						update_post_meta($order_id, 'ck_vacct_result', json_encode($postdata, JSON_UNESCAPED_UNICODE));
 						// we received the payment
 						$order->payment_complete();
-						$order->reduce_order_stock();
+						wc_reduce_stock_levels($order->get_id());
 
 						// some notes to customer (replace true with false to make it private)
 						$order->add_order_note('가상결제 입금확인 완료(승인번호:' . $postdata['ACCEPT_NO'] . ')', true);
@@ -652,7 +672,7 @@ function cookiepay_payment_gateway()
 					if (!($order->has_status('processing'))) {
 						// we received the payment
 						$order->payment_complete();
-						$order->reduce_order_stock();
+						wc_reduce_stock_levels($order->get_id());
 					}
 					// some notes to customer (replace true with false to make it private)
 					$order->add_order_note($pay_method . ' 결제 확인 완료(승인번호:' . $postdata['ACCEPT_NO'] . ')', true);
@@ -803,7 +823,7 @@ add_action('woocommerce_pay_order_before_submit', function () {
 		if (empty($paymethod)) $paymethod = 'CARD';
 
 		$pay_type = "";
-		if(!empty($paymethod) && $paymethod == "CARD_WON") { 
+		if(!empty($paymethod) && $paymethod == "CARD_WON") {
 			$paymethod = "CARD";
 			$pay_type = "7";
 		}
@@ -1009,7 +1029,7 @@ function my_force_cookiepay_reorder_params( $pay_url, $order ) {
     //     없으면 그냥 '' 빈값 -> 오류 발생 처리
     $existing_paymethod = get_post_meta( $order->get_id(), 'ck_method', true );
     if ( empty($existing_paymethod) ) {
-        $existing_paymethod = ''; 
+        $existing_paymethod = '';
     }
 
     // (3) order-pay 링크에, 우리가 원하는 파라미터를 추가
@@ -1020,6 +1040,6 @@ function my_force_cookiepay_reorder_params( $pay_url, $order ) {
     );
 
     $pay_url = add_query_arg( $args_to_add, $pay_url );
-    
+
     return $pay_url;
 }
